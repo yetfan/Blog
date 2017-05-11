@@ -1,0 +1,1 @@
+This is the first thing I do to make my own Blog.
