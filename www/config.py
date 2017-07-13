@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # 综合本地和服务器设置
-import www.config_default as config_default
+import config_default
 
 
 class Dict(dict):
@@ -36,7 +36,7 @@ def merge(default, override):
 	return r
 
 
-def toDict(dict):
+def toDict(d):
 	D = Dict()
 	for k, v in d.items():
 		D[k] = toDict(v) if isinstance(v, dict) else v
@@ -46,8 +46,8 @@ def toDict(dict):
 configs = config_default.configs
 
 try:
-	import www.config_override as config_override
-	configs = merge(configs, config_override)
+	import config_override
+	configs = merge(configs, config_override.configs)
 except ImportWarning:
 	pass
 
