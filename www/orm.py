@@ -7,6 +7,11 @@ import aiomysql
 
 def log(sql, args=()):
 	logging.info('SQL: %s' % sql)
+	try:
+		logging.info('args： %s' % args)
+	except TypeError:
+		pass
+
 
 
 async def create_pool(loop, **kw):
