@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import asyncio, logging
-
+import asyncio
+import logging
 import aiomysql
 
 
@@ -13,10 +13,17 @@ def log(sql, args=()):
 		pass
 
 
-
 async def create_pool(loop, **kw):
+	"""
+	创建连接池
+	:param loop:
+	:param kw:参数
+	:return: null
+	"""
 	logging.info('create database connection pool...')
+	# 创建全局变量
 	global __pool
+	# 初始化链接池参数
 	__pool = await aiomysql.create_pool(
 		host=kw.get('host', 'localhost'),
 		port=kw.get('port', 3306),
@@ -31,7 +38,21 @@ async def create_pool(loop, **kw):
 	)
 
 
+# 销毁连接池
+async def destory_pool():
+	global __pool
+	if __pool is not None:
+		__pool.close()
+		await __pool.wait_closed()
+
+
 async def select(sql, args, size=None):
+	"""
+	:param sql: sql语句
+	:param args: 语句中的参数
+	:param size: 要查询的数量
+	:return: 查询结果
+	"""
 	log(sql, args)
 	global __pool
 	async with __pool.get() as conn:
@@ -46,6 +67,13 @@ async def select(sql, args, size=None):
 
 
 async def execute(sql, args, autocommit=True):
+	"""
+	数据库操作函数
+	:param sql: sql语句
+	:param args: 参数
+	:param autocommit: 自动提交事务
+	:return: 操作行数
+	"""
 	log(sql)
 	async with __pool.get() as conn:
 		if not autocommit:
@@ -64,10 +92,15 @@ async def execute(sql, args, autocommit=True):
 
 
 def create_args_string(num):
-	L = []
+	"""
+	连接所有参数
+	:param num:
+	:return:
+	"""
+	l = []
 	for n in range(num):
-		L.append('?')
-	return ', '.join(L)
+		l.append('?')
+	return ', '.join(l)
 
 
 class Field(object):
@@ -122,12 +155,12 @@ class ModelMetaclass(type):
 				if v.primary_key:
 					# 找到主键:
 					if primaryKey:
-						raise StandardError('Duplicate primary key for field: %s' % k)
+						raise Exception('Duplicate primary key for field: %s' % k)
 					primaryKey = k
 				else:
 					fields.append(k)
 		if not primaryKey:
-			raise StandardError('Primary key not found.')
+			raise Exception('Primary key not found.')
 		for k in mappings.keys():
 			attrs.pop(k)
 		escaped_fields = list(map(lambda f: '`%s`' % f, fields))
@@ -199,7 +232,13 @@ class Model(dict, metaclass=ModelMetaclass):
 
 	@classmethod
 	async def findNumber(cls, selectField, where=None, args=None):
-		' find number by select and where. '
+		"""
+		find number by select and where.
+		:param selectField:
+		:param where:
+		:param args:
+		:return:
+		"""
 		sql = ['select %s _num_ from `%s`' % (selectField, cls.__table__)]
 		if where:
 			sql.append('where')
